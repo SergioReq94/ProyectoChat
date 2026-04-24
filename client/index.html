@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #f0f0f0;
+            --text-color: #333;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            place-content: center;
+            height: 100vh;
+            grid-template-rows: auto 1fr;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #0056b3;
+        }
+        #chat-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        #messages {
+            height: 800px;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        #input-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        #message-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #send-button {
+            width: 60px;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #send-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+</head>
+<body>
+    <div class="header">
+        <h1>Planazo Chat</h1>
+    </div>
+
+    <section id="chat-container">
+         <div id="messages"></div>
+        <form id="input-container" action="">
+            <input type="text" name="message" id="message-input" placeholder="Type your message here..." autocomplete="off"/>
+            <button type="submit" id="send-button">Send</button>
+        </form>
+    </section>
+
+    <!-- <div id="chat-container">
+        <div id="messages"></div>
+        <div id="input-container">
+            <input type="text" id="message-input" placeholder="Type your message here...">
+            <button id="send-button">Send</button>
+        </div> -->
+    
+</body>
+</html>
