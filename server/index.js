@@ -18,7 +18,17 @@ app.get('/', (req, res) => {
 
 io.on('connection', (socket) => {
     console.log('a user has connected');
+
+    socket.on('disconnect', () => {
+        console.log('a user has disconnected');
+    });
+    
+    socket.on('chat message', (msg) => {
+        io.emit('chat message', msg);
+    });
 });
+
+
 
 server.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
