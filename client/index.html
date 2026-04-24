@@ -6,22 +6,22 @@
         const socket = io();
 
         const form = document.getElementById('input-container');
-        const imput = document.getElementById('message-input');
+        const input = document.getElementById('message-input');
         const messages = document.getElementById('messages');
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
-            const message = imput.value.trim();
+            const message = input.value.trim();
             if (message) {
                 socket.emit('chat message', message);
-                imput.value = '';
+                input.value = '';
             }
         });
 
         socket.on('chat message', (msg) => {
             const item = `<li>${msg}</li>`;
             messages.insertAdjacentHTML('beforeend', item);
-            messages.scrollTop = messages.scrollHeight; // Scroll to the bottom
+            messages.scrollTop = messages.scrollHeight; // Scroll to the bottom 
         });
 
 
@@ -65,9 +65,28 @@
         #messages {
             height: 600px;
             overflow-y: scroll;
-            border: 1px solid #ccc;
             padding: 10px;
             margin-bottom: 10px;
+            list-style-type: none;
+            scroll-behavior: smooth;
+        }
+        #messages li {
+            background-color: #e9ecef;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            position: relative;
+            padding-left: 25px;
+        }
+        #messages li::before {
+            content: "•";
+            color: #007bff;
+            font-weight: bold;
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
         }
         #input-container {
             display: flex;
