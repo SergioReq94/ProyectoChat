@@ -21,10 +21,10 @@
                 }
             }
             // const res = await fetch('https://random-data-api.com/api/users/random_user');
-            const { username: randomUsername } = await res.json();
+            const { username: newUsername } = await res.json();
 
-            localStorage.setItem('username', randomUsername);
-            return randomUsername;
+            localStorage.setItem('username', newUsername);
+            return newUsername;
         };
 
         const socket = io({
@@ -97,10 +97,9 @@
         #messages {
             height: 600px;
             overflow-y: scroll;
-            padding: 0;
-            margin: 0;
-            list-style-type: none;
             scroll-behavior: smooth;
+            padding-bottom: 10px;
+            list-style-type: none;
         }
         #messages li {
             padding: 10px 15px;
