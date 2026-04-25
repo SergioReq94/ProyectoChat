@@ -23,8 +23,7 @@ await db.execute(`
     CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT, 
     content TEXT,
-    username TEXT,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    user TEXT
     );
 `);
 
@@ -45,8 +44,8 @@ io.on('connection', async (socket) => {
         let result
         try {
             result = await db.execute({
-                sql: 'INSERT INTO messages (content) VALUES (:msg)',
-                args: { msg }
+                sql: 'INSERT INTO messages (content, user) VALUES (:msg, :user)',
+                args: { msg, user: socket.handshake.auth.username }
             });
         }
         catch (e) {
@@ -56,6 +55,24 @@ io.on('connection', async (socket) => {
 
         io.emit('chat message', msg, result.lastInsertRowid?.toString());
     });
+
+    console.log('socket.recovered:', socket.recovered); // <-- Verifica si el socket se ha recuperado
+    console.log(socket.handshake.auth); // <-- Verifica los datos de autenticación en el handshake
+    if (!socket.recovered) { // <-- Recupera mensajes sin conexión
+        try {
+            const result = await db.execute({
+                sql: 'SELECT id, content FROM messages where id > ?',
+                args: [socket.handshake.auth.serverOffset || 0]
+            });
+            result.rows.forEach(row => {
+                socket.emit('chat message', row.content, row.id.toString());
+            });
+        }
+        catch (e) {
+            console.error(e);
+            return
+        }
+    }
 
 });
 

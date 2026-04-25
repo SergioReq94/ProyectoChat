@@ -3,11 +3,24 @@
     <script type="module">
         import { io } from 'https://cdn.socket.io/4.5.1/socket.io.esm.min.js';
 
-        const socket = io();
+        const socket = io({
+            auth: {
+                serverOffset: 0,
+                username: await fetch ('/api/username').then(res => res.text()), // Fetch username from the server
+                token: '' // You can implement token-based authentication if needed
+            }
+        });
 
         const form = document.getElementById('input-container');
         const input = document.getElementById('message-input');
         const messages = document.getElementById('messages');
+        const getUsername = async () => {
+            let username = prompt('Enter your username:');
+            while (!username) {
+                username = prompt('Username cannot be empty. Please enter your username:');
+            }
+            return username;
+        };
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -21,6 +34,7 @@
         socket.on('chat message', (msg) => {
             const item = `<li>${msg}</li>`;
             messages.insertAdjacentHTML('beforeend', item);
+            socket.auth.serverOffset = serverOffset; // Update server offset
             messages.scrollTop = messages.scrollHeight; // Scroll to the bottom 
         });
 
