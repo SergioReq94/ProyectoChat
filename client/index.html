@@ -3,24 +3,37 @@
     <script type="module">
         import { io } from 'https://cdn.socket.io/4.5.1/socket.io.esm.min.js';
 
-        const socket = io({
-            auth: {
-                serverOffset: 0,
-                username: await fetch ('/api/username').then(res => res.text()), // Fetch username from the server
-                token: '' // You can implement token-based authentication if needed
-            }
-        });
-
         const form = document.getElementById('input-container');
         const input = document.getElementById('message-input');
         const messages = document.getElementById('messages');
+
         const getUsername = async () => {
-            let username = prompt('Enter your username:');
-            while (!username) {
-                username = prompt('Username cannot be empty. Please enter your username:');
+            const username = localStorage.getItem('username');
+            if (username) {
+                return username;
+            } else {
+                const newUsername = prompt('Please enter your username:');
+                if (newUsername) {
+                    localStorage.setItem('username', newUsername);
+                    return newUsername;
+                } else {
+                    return 'Anonymous';
+                }
             }
-            return username;
+            // const res = await fetch('https://random-data-api.com/api/users/random_user');
+            const { username: randomUsername } = await res.json();
+
+            localStorage.setItem('username', randomUsername);
+            return randomUsername;
         };
+
+        const socket = io({
+            auth: {
+                serverOffset: 0,
+                username: await getUsername(),
+                token: '' // You can implement token-based authentication if needed
+            }
+        });
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -31,8 +44,10 @@
             }
         });
 
-        socket.on('chat message', (msg) => {
-            const item = `<li>${msg}</li>`;
+        socket.on('chat message', (msg, serverOffset, username) => {
+            const item = `<li>${msg}
+                <small>${username}</small>
+            </li>`;
             messages.insertAdjacentHTML('beforeend', item);
             socket.auth.serverOffset = serverOffset; // Update server offset
             messages.scrollTop = messages.scrollHeight; // Scroll to the bottom 
