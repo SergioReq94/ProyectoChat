@@ -23,7 +23,8 @@ await db.execute(`
     CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT, 
     content TEXT,
-    user TEXT
+    username TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 `);
 
@@ -33,17 +34,31 @@ app.get('/', (req, res) => {
     res.sendFile('./client/index.html', { root: '.' });
 });
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
     console.log('a user has connected');
 
     socket.on('disconnect', () => {
         console.log('a user has disconnected');
     });
     
-    socket.on('chat message', (msg) => {
-        io.emit('chat message', msg);
+    socket.on('chat message', async (msg) => {
+        let result
+        try {
+            result = await db.execute({
+                sql: 'INSERT INTO messages (content) VALUES (:msg)',
+                args: { msg }
+            });
+        }
+        catch (e) {
+            console.error(e);
+            return
+        }
+
+        io.emit('chat message', msg, result.lastInsertRowid?.toString());
     });
+
 });
+
 
 server.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
