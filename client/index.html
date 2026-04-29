@@ -1,67 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-    <script type="module">
-        import { io } from 'https://cdn.socket.io/4.5.1/socket.io.esm.min.js';
-
-        const form = document.getElementById('input-container');
-        const input = document.getElementById('message-input');
-        const messages = document.getElementById('messages');
-
-        const getUsername = async () => {
-            const username = localStorage.getItem('username');
-            if (username) {
-                return username;
-            } else {
-                const newUsername = prompt('Please enter your username:');
-                if (newUsername) {
-                    localStorage.setItem('username', newUsername);
-                    return newUsername;
-                } else {
-                    return 'Anonymous';
-                }
-            }
-            // const res = await fetch('https://random-data-api.com/api/users/random_user');
-            const { username: newUsername } = await res.json();
-
-            localStorage.setItem('username', newUsername);
-            return newUsername;
-        };
-
-        const socket = io({
-            auth: {
-                serverOffset: 0,
-                username: await getUsername(),
-                token: '' // You can implement token-based authentication if needed
-            }
-        });
-
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const message = input.value.trim();
-            if (message) {
-                socket.emit('chat message', message);
-                input.value = '';
-            }
-        });
-
-        socket.on('chat message', (msg, serverOffset, username) => {
-            const item = `<li>${msg}
-                <small>${username}</small>
-            </li>`;
-            messages.insertAdjacentHTML('beforeend', item);
-            socket.auth.serverOffset = serverOffset; // Update server offset
-            messages.scrollTop = messages.scrollHeight; // Scroll to the bottom 
-        });
-
-
-        // socket.on('chat message', (msg) => {
-        //     const messageElement = document.createElement('li');
-        //     messageElement.textContent = msg;
-        //     messages.appendChild(messageElement);
-        //     messages.scrollTop = messages.scrollHeight; // Scroll to the bottom
-        // });
-
-    </script>
     <style>
         :root {
             --primary-color: #007bff;
@@ -174,5 +112,51 @@
             <button id="send-button">Send</button>
         </div> -->
     
+    <script type="module">
+        import { io } from 'https://cdn.socket.io/4.5.1/socket.io.esm.min.js';
+
+        const form = document.getElementById('input-container');
+        const input = document.getElementById('message-input');
+        const messages = document.getElementById('messages');
+
+        const getUsername = async () => {
+            const username = localStorage.getItem('username');
+            if (username) {
+                return username;
+            }
+            const newUsername = prompt('Please enter your username:');
+            if (newUsername) {
+                localStorage.setItem('username', newUsername);
+                return newUsername;
+            }
+            return 'Anonymous';
+        };
+
+        const socket = io({
+            auth: {
+                serverOffset: 0,
+                username: await getUsername(),
+                token: '' // You can implement token-based authentication if needed
+            }
+        });
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const message = input.value.trim();
+            if (message) {
+                socket.emit('chat message', message);
+                input.value = '';
+            }
+        });
+
+        socket.on('chat message', (msg, serverOffset, username) => {
+            const item = `<li>${msg}
+                <small>${username}</small>
+            </li>`;
+            messages.insertAdjacentHTML('beforeend', item);
+            socket.auth.serverOffset = serverOffset; // Update server offset
+            messages.scrollTop = messages.scrollHeight; // Scroll to the bottom 
+        });
+    </script>
 </body>
 </html>

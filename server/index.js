@@ -15,8 +15,7 @@ const io = new Server(server, {
 ); // Attach Socket.IO to the HTTP server
 
 const db = createClient({
-    url: 'libsql://chat-sergioreq.aws-eu-west-1.turso.io',
-    authToken: process.env.DB_TOKEN
+    url: 'file:./chat.db'
 });
 
 await db.execute(`
