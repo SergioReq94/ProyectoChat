@@ -28,72 +28,86 @@
         </form>
     </section>
 
-    <!-- SCRIPT PRINCIPAL - Cliente Socket.IO -->
+<!-- SCRIPT PRINCIPAL - Cliente Socket.IO -->
     <script type="module">
-        // Importar Socket.IO desde CDN (versión ESM)
-        import { io } from 'https://cdn.socket.io/4.5.1/socket.io.esm.min.js';
+    // Importar Socket.IO desde CDN (versión ESM)
+    import { io } from 'https://cdn.socket.io/4.5.1/socket.io.esm.min.js';
 
-        // ===== ELEMENTOS DOM =====
-        const form = document.getElementById('input-container');     // Formulario envío
-        const input = document.getElementById('message-input');      // Input mensaje
-        const messages = document.getElementById('messages');        // Lista mensajes
+    // ===== ELEMENTOS DOM =====
+    const form = document.getElementById('input-container');     // Formulario envío
+    const input = document.getElementById('message-input');      // Input mensaje
+    const messages = document.getElementById('messages');        // Lista mensajes
 
-        // ===== FUNCIÓN OBTENER/CREAR USUARIO =====
-        const getUsername = async () => {
-            // Verificar si ya existe username en localStorage
-            const username = localStorage.getItem('username');
-            if (username) return username;
+    // ===== FUNCIÓN OBTENER/CREAR USUARIO =====
+    const getUsername = async () => {
+        // Verificar si ya existe username en localStorage
+        const username = localStorage.getItem('username');
+        if (username) return username;
 
-            // Pedir nuevo username al usuario
-            const newUsername = prompt('Por favor ingresa tu nombre de usuario:');
-            if (newUsername && newUsername.trim()) {
-                localStorage.setItem('username', newUsername.trim());
-                return newUsername.trim();
-            }
-            return 'Anónimo';  // Usuario por defecto
-        };
+        // Pedir nuevo username al usuario
+        const newUsername = prompt('Por favor ingresa tu nombre de usuario:');
+        if (newUsername && newUsername.trim()) {
+            localStorage.setItem('username', newUsername.trim());
+            return newUsername.trim();
+        }
+        return 'Anónimo';  // Usuario por defecto
+    };
 
-        // ===== CONEXIÓN SOCKET.IO =====
-        const socket = io({
-            auth: {
-                serverOffset: 0,                    // ID del último mensaje conocido
-                username: await getUsername(),      // Username para identificar al usuario
-                token: ''                           // Opcional: autenticación con token
-            }
-        });
+    // ===== FUNCIÓN OBTENER/CREAR COLOR =====
+    const getUserColor = () => {
+        // Verificar si ya existe color en localStorage
+        let color = localStorage.getItem('userColor');
+        if (color) return color;
 
-        // ===== ENVÍO DE MENSAJES =====
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();  // Prevenir recarga de página
-            
-            const message = input.value.trim();
-            if (message) {
-                // Enviar mensaje al servidor
-                socket.emit('chat message', message);
-                input.value = '';  // Limpiar input
-                input.focus();     // Mantener foco en input
-            }
-        });
+        // Generar color aleatorio brillante
+        const hue = Math.floor(Math.random() * 360);
+        color = `hsl(${hue}, 70%, 50%)`;
+        localStorage.setItem('userColor', color);
+        return color;
+    };
 
-        // ===== RECEPCIÓN DE MENSAJES =====
-        socket.on('chat message', (msg, messageId, username) => {
-            // Crear elemento HTML del mensaje
-            const item = `
-                <li>
-                    ${msg}
-                    <small style="color: #666; font-size: 0.8em;"> - ${username}</small>
-                </li>
-            `;
-            
-            // Añadir al final de la lista
-            messages.insertAdjacentHTML('beforeend', item);
-            
-            // Actualizar offset para sincronización
-            socket.auth.serverOffset = messageId;
-            
-            // Auto-scroll al final
-            messages.scrollTop = messages.scrollHeight;
-        });
+    // ===== CONEXIÓN SOCKET.IO =====
+    const socket = io({
+        auth: {
+            serverOffset: 0,                    // ID del último mensaje conocido
+            username: await getUsername(),      // Username para identificar al usuario
+            color: getUserColor(),            // Color único del usuario
+            token: ''                           // Opcional: autenticación con token
+        }
+    });
+
+    // ===== ENVÍO DE MENSAJES =====
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();  // Prevenir recarga de página
+        
+        const message = input.value.trim();
+        if (message) {
+            // Enviar mensaje al servidor
+            socket.emit('chat message', message);
+            input.value = '';  // Limpiar input
+            input.focus();     // Mantener foco en input
+        }
+    });
+
+    // ===== RECEPCIÓN DE MENSAJES =====
+    socket.on('chat message', (msg, messageId, username, color) => {
+        // Crear elemento HTML del mensaje
+        const item = `
+            <li>
+                ${msg}
+                <small style="color: ${color || '#666'}; font-size: 0.8em; font-weight: bold;"> - ${username}</small>
+            </li>
+        `;
+        
+        // Añadir al final de la lista
+        messages.insertAdjacentHTML('beforeend', item);
+        
+        // Actualizar offset para sincronización
+        socket.auth.serverOffset = messageId;
+        
+        // Auto-scroll al final
+        messages.scrollTop = messages.scrollHeight;
+    });
     </script>
 
     <!-- ESTILOS CSS -->
@@ -169,10 +183,10 @@
             font-size: 16px;
         }
 
-        /* Alternar colores de mensajes */
+        /* Alternar colores de mensajes
         #messages li:nth-child(even) {
             background-color: var(--message-bg-color);
-        }
+        } */
 
         /* ===== FORMULARIO ENVÍO ===== */
         #input-container {

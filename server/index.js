@@ -1,13 +1,3 @@
-/* ========================================
- * SERVIDOR DE CHAT - Express + Socket.IO + SQLite
- * ========================================
- * Este archivo contiene el servidor completo del chat
- * Funcionalidades:
- * - API HTTP con Express
- * - WebSocket con Socket.IO para mensajes en tiempo real
- * - Base de datos SQLite local para persistencia de mensajes
- * ======================================== */
-
 // ===== IMPORTS =====
 import express from 'express';           // Framework web para manejar rutas HTTP
 import logger from 'morgan';            // Middleware para logging de peticiones HTTP
@@ -37,7 +27,8 @@ await db.execute(`
     CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,  
         content TEXT,                          
-        user TEXT                              
+        user TEXT,
+        color TEXT DEFAULT '#ffffff'                              
     );
 `);
 
@@ -65,10 +56,11 @@ io.on('connection', async (socket) => {
         try {
             // Guardar mensaje en base de datos
             result = await db.execute({
-                sql: 'INSERT INTO messages (content, user) VALUES (:msg, :username)',
+                sql: 'INSERT INTO messages (content, user, color) VALUES (:msg, :username, :color)',
                 args: { 
                     msg, 
-                    username: socket.handshake.auth.username || 'Anónimo' 
+                    username: socket.handshake.auth.username || 'Anónimo',
+                    color: socket.handshake.auth.color || '#ffffff'
                 }
             });
         } catch (e) {
@@ -80,7 +72,8 @@ io.on('connection', async (socket) => {
         io.emit('chat message', 
             msg, 
             result.lastInsertRowid?.toString(),  // ID del mensaje para sincronización
-            socket.handshake.auth.username || 'Anónimo'
+            socket.handshake.auth.username || 'Anónimo',
+            socket.handshake.auth.color || '#ffffff'
         );
     });
 
@@ -92,13 +85,13 @@ io.on('connection', async (socket) => {
         try {
             // Cargar mensajes más recientes (desde el último ID conocido)
             const result = await db.execute({
-                sql: 'SELECT id, content, user FROM messages WHERE id > ? ORDER BY id',
+                sql: 'SELECT id, content, user, color FROM messages WHERE id > ? ORDER BY id',
                 args: [socket.handshake.auth.serverOffset || 0]
             });
             
             // Enviar mensajes antiguos al nuevo cliente
             result.rows.forEach(row => {
-                socket.emit('chat message', row.content, row.id.toString(), row.user);
+                socket.emit('chat message', row.content, row.id.toString(), row.user, row.color);
             });
         } catch (e) {
             console.error('Error recuperando mensajes:', e);
