@@ -1,162 +1,222 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planazo Chat</title>
+</head>
+<body>
+    <div class="header">
+        <h1>💬 Planazo Chat</h1>
+    </div>
+
+    <!-- CONTENEDOR PRINCIPAL DEL CHAT -->
+    <section id="chat-container">
+        <!-- LISTA DE MENSAJES (se llena dinámicamente con JS) -->
+        <ul id="messages"></ul>
+        
+        <!-- FORMULARIO DE ENVÍO DE MENSAJES -->
+        <form id="input-container">
+            <input 
+                type="text" 
+                name="message" 
+                id="message-input" 
+                placeholder="Escribe tu mensaje aquí..." 
+                autocomplete="off"
+            />
+            <button type="submit" id="send-button">Enviar</button>
+        </form>
+    </section>
+
+    <!-- SCRIPT PRINCIPAL - Cliente Socket.IO -->
+    <script type="module">
+        // Importar Socket.IO desde CDN (versión ESM)
+        import { io } from 'https://cdn.socket.io/4.5.1/socket.io.esm.min.js';
+
+        // ===== ELEMENTOS DOM =====
+        const form = document.getElementById('input-container');     // Formulario envío
+        const input = document.getElementById('message-input');      // Input mensaje
+        const messages = document.getElementById('messages');        // Lista mensajes
+
+        // ===== FUNCIÓN OBTENER/CREAR USUARIO =====
+        const getUsername = async () => {
+            // Verificar si ya existe username en localStorage
+            const username = localStorage.getItem('username');
+            if (username) return username;
+
+            // Pedir nuevo username al usuario
+            const newUsername = prompt('Por favor ingresa tu nombre de usuario:');
+            if (newUsername && newUsername.trim()) {
+                localStorage.setItem('username', newUsername.trim());
+                return newUsername.trim();
+            }
+            return 'Anónimo';  // Usuario por defecto
+        };
+
+        // ===== CONEXIÓN SOCKET.IO =====
+        const socket = io({
+            auth: {
+                serverOffset: 0,                    // ID del último mensaje conocido
+                username: await getUsername(),      // Username para identificar al usuario
+                token: ''                           // Opcional: autenticación con token
+            }
+        });
+
+        // ===== ENVÍO DE MENSAJES =====
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();  // Prevenir recarga de página
+            
+            const message = input.value.trim();
+            if (message) {
+                // Enviar mensaje al servidor
+                socket.emit('chat message', message);
+                input.value = '';  // Limpiar input
+                input.focus();     // Mantener foco en input
+            }
+        });
+
+        // ===== RECEPCIÓN DE MENSAJES =====
+        socket.on('chat message', (msg, messageId, username) => {
+            // Crear elemento HTML del mensaje
+            const item = `
+                <li>
+                    ${msg}
+                    <small style="color: #666; font-size: 0.8em;"> - ${username}</small>
+                </li>
+            `;
+            
+            // Añadir al final de la lista
+            messages.insertAdjacentHTML('beforeend', item);
+            
+            // Actualizar offset para sincronización
+            socket.auth.serverOffset = messageId;
+            
+            // Auto-scroll al final
+            messages.scrollTop = messages.scrollHeight;
+        });
+    </script>
+
+    <!-- ESTILOS CSS -->
     <style>
+        /* ===== VARIABLES CSS ===== */
         :root {
             --primary-color: #007bff;
             --primary-color-hover: #0056b3;
-            --secondary-color: #6c757d;
             --background-color: #f0f0f0;
             --chat-container-bg-color: #ffffff;
-            --text-color: #333;
             --message-bg-color: #b1e1e7;
         }
+
+        /* ===== LAYOUT GENERAL ===== */
         body {
             font-family: Arial, sans-serif;
             background-color: var(--background-color);
             margin: 0;
             padding: 20px;
+            display: grid;
             place-content: center;
-            height: 100vh;
-            grid-template-rows: auto 1fr;
+            min-height: 100vh;
         }
+
+        /* ===== HEADER ===== */
         .header {
             text-align: center;
             margin-bottom: 20px;
-            color: #0056b3;
-        }
-        #chat-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: var(--chat-container-bg-color);
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        #messages {
-            height: 600px;
-            overflow-y: scroll;
-            scroll-behavior: smooth;
-            padding-bottom: 10px;
-            list-style-type: none;
-        }
-        #messages li {
-            padding: 10px 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            position: relative;
-            padding-left: 25px;
-        }
-        #messages li::before {
-            content: "•";
             color: var(--primary-color);
-            font-weight: bold;
-            position: absolute;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 18px;
         }
 
-        #messages li:nth-child(odd) {
+        /* ===== CONTENEDOR CHAT ===== */
+        #chat-container {
+            max-width: 600px;
+            width: 100%;
+            background-color: var(--chat-container-bg-color);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* ===== LISTA MENSAJES ===== */
+        #messages {
+            height: 500px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            padding: 0;
+            margin: 0 0 20px 0;
+            list-style: none;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            background: #fafafa;
+        }
+
+        #messages li {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 18px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: relative;
+            padding-left: 30px;
+        }
+
+        /* Icono de mensaje */
+        #messages li::before {
+            content: "💬";
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+        }
+
+        /* Alternar colores de mensajes */
+        #messages li:nth-child(even) {
             background-color: var(--message-bg-color);
         }
 
+        /* ===== FORMULARIO ENVÍO ===== */
         #input-container {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
         }
+
         #message-input {
             flex: 1;
-            margin: 4px 0;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 40px;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
         }
+
+        #message-input:focus {
+            border-color: var(--primary-color);
+        }
+
         #send-button {
-            width: 60px;
-            padding: 10px;
-            background-color: var(--primary-color);
+            width: 70px;
+            padding: 12px;
+            background: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 25px;
             cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
         }
+
         #send-button:hover {
-            background-color: var(--primary-color-hover);
+            background: var(--primary-color-hover);
         }
 
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            #chat-container { margin: 10px; padding: 15px; }
+            #messages { height: 400px; }
+        }
     </style>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat App</title>
-</head>
-<body>
-    <div class="header">
-        <h1>Planazo Chat</h1>
-    </div>
-
-    <section id="chat-container">
-         <ul id="messages"></ul>
-        <form id="input-container" action="">
-            <input type="text" name="message" id="message-input" placeholder="Type your message here..." autocomplete="off"/>
-            <button type="submit" id="send-button">Send</button>
-        </form>
-    </section>
-
-    <!-- <div id="chat-container">
-        <div id="messages"></div>
-        <div id="input-container">
-            <input type="text" id="message-input" placeholder="Type your message here...">
-            <button id="send-button">Send</button>
-        </div> -->
-    
-    <script type="module">
-        import { io } from 'https://cdn.socket.io/4.5.1/socket.io.esm.min.js';
-
-        const form = document.getElementById('input-container');
-        const input = document.getElementById('message-input');
-        const messages = document.getElementById('messages');
-
-        const getUsername = async () => {
-            const username = localStorage.getItem('username');
-            if (username) {
-                return username;
-            }
-            const newUsername = prompt('Please enter your username:');
-            if (newUsername) {
-                localStorage.setItem('username', newUsername);
-                return newUsername;
-            }
-            return 'Anonymous';
-        };
-
-        const socket = io({
-            auth: {
-                serverOffset: 0,
-                username: await getUsername(),
-                token: '' // You can implement token-based authentication if needed
-            }
-        });
-
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const message = input.value.trim();
-            if (message) {
-                socket.emit('chat message', message);
-                input.value = '';
-            }
-        });
-
-        socket.on('chat message', (msg, serverOffset, username) => {
-            const item = `<li>${msg}
-                <small>${username}</small>
-            </li>`;
-            messages.insertAdjacentHTML('beforeend', item);
-            socket.auth.serverOffset = serverOffset; // Update server offset
-            messages.scrollTop = messages.scrollHeight; // Scroll to the bottom 
-        });
-    </script>
 </body>
 </html>
